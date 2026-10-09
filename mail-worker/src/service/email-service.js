@@ -357,11 +357,11 @@ const emailService = {
 
 		let sendResult = {};
 
-		//存在站外邮箱时，如果配置了 Cloudflare Email Service 就优先使用，否则使用 Resend
+		// Prioritaskan Resend jika tersedia token untuk domain pengirim
 		if (!allInternal) {
 
-			if (useCloudflareEmail) {
-				sendResult = await this.sendByCloudflareEmail(c, {
+			if (resendToken) {
+				sendResult = await this.sendByResend(resendToken, {
 					name,
 					accountEmail: accountRow.email,
 					receiveEmail,
@@ -372,8 +372,8 @@ const emailService = {
 					sendType,
 					messageId: emailRow.messageId
 				});
-			} else {
-				sendResult = await this.sendByResend(resendToken, {
+			} else if (useCloudflareEmail) {
+				sendResult = await this.sendByCloudflareEmail(c, {
 					name,
 					accountEmail: accountRow.email,
 					receiveEmail,
@@ -408,7 +408,7 @@ const emailService = {
 		emailData.content = html;
 		emailData.text = text;
 		emailData.accountId = accountId;
-		emailData.status = useCloudflareEmail ? emailConst.status.DELIVERED : emailConst.status.SENT;
+		emailData.status = (!resendToken && useCloudflareEmail) ? emailConst.status.DELIVERED : emailConst.status.SENT;
 		emailData.type = emailConst.type.SEND;
 		emailData.userId = userId;
 		emailData.resendEmailId = data?.id;
